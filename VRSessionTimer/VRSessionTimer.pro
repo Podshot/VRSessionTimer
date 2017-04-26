@@ -36,7 +36,14 @@ LIBS += -L$$PWD/../openvr/lib/win64/ -lopenvr_api
 INCLUDEPATH += $$PWD/../openvr/headers
 DEPENDPATH += $$PWD/../openvr/headers
 
-DESTDIR = $$PWD/../build/bin/win64
+Release:DESTDIR = $$PWD/../build/release/bin/win64
+Release:MOC_DIR = $$PWD/../build/release/.moc
+Release:RCC_DIR = $$PWD/../build/release/.rcc
+
+Debug:DESTDIR = $$PWD/../build/debug/bin/win64
+Debug:MOC_DIR = $$PWD/../build/debug/.moc
+Debug:RCC_DIR = $$PWD/../build/debug/.rcc
+Debug:OBJECTS_DIR = $$PWD/../build/MSVC2013_64bit/debug
 
 #QMAKE_LFLAGS += -static-libgcc -static-libstdc++
 

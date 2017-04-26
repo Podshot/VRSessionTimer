@@ -14,7 +14,7 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        overlaywidget.cpp \
+    overlaywidget.cpp \
     openvroverlaycontroller.cpp \
     vrnotification.cpp \
     mainwindow.cpp
@@ -36,7 +36,7 @@ LIBS += -L$$PWD/../openvr/lib/win64/ -lopenvr_api
 INCLUDEPATH += $$PWD/../openvr/headers
 DEPENDPATH += $$PWD/../openvr/headers
 
-DESTDIR = ../../build/bin/win64
+DESTDIR = $$PWD/../build/bin/win64
 
 #QMAKE_LFLAGS += -static-libgcc -static-libstdc++
 

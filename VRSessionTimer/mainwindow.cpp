@@ -2,8 +2,9 @@
 #include "ui_mainwindow.h"
 #include "overlaywidget.h"
 #include "openvroverlaycontroller.h"
+#include <iostream>
 
-#define USEVR 0
+#define USEVR 1
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -70,7 +71,11 @@ void MainWindow::updateTimeRemaining() {
         int remainingMinutes = deltaTime / 60;
         int remainingSeconds = deltaTime % 60;
 
-        remainingLabel->setText(QString("%1:%2").arg(QString::number(remainingMinutes), QString::number(remainingSeconds)));
+        if (remainingMinutes == 0 && remainingSeconds == 0) {
+            stopCountdown();
+        }
+
+        remainingLabel->setText(QString("%1:%2").arg(QString::number(remainingMinutes)).arg(remainingSeconds, 2, 10, QChar('0')));
     }
 }
 

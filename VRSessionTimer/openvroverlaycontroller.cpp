@@ -13,6 +13,7 @@
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QGraphicsEllipseItem>
 #include <QCursor>
+#include <iostream>
 
 using namespace vr;
 
@@ -175,7 +176,7 @@ void COpenVROverlayController::OnSceneChanged( const QList<QRectF>& )
 	// skip rendering if the overlay isn't visible
     if( !vr::VROverlay() ||
 //        ( !vr::VROverlay()->IsOverlayVisible( m_ulOverlayHandle ) && !vr::VROverlay()->IsOverlayVisible( m_ulOverlayThumbnailHandle ) ) )
-            ( !vr::VROverlay()->IsOverlayVisible( m_ulOverlayHandle ) ) )
+            !vr::VROverlay()->IsOverlayVisible( m_ulOverlayHandle ) )
         return;
 
 	m_pOpenGLContext->makeCurrent( m_pOffscreenSurface );
@@ -310,9 +311,9 @@ void COpenVROverlayController::OnTimeoutPumpEvents()
 		}
 	}
 
-    if( m_ulOverlayThumbnailHandle != vr::k_ulOverlayHandleInvalid )
-    {
-        while( vr::VROverlay()->PollNextOverlayEvent( m_ulOverlayThumbnailHandle, &vrEvent, sizeof( vrEvent)  ) )
+    //if( m_ulOverlayThumbnailHandle != vr::k_ulOverlayHandleInvalid )
+    //{
+        while( vr::VROverlay()->PollNextOverlayEvent( m_ulOverlayHandle, &vrEvent, sizeof( vrEvent)  ) )
         {
             switch( vrEvent.eventType )
             {
@@ -323,7 +324,7 @@ void COpenVROverlayController::OnTimeoutPumpEvents()
                 break;
             }
         }
-    }
+    //}
 
 }
 
@@ -337,20 +338,22 @@ void COpenVROverlayController::SetWidget( QWidget *pWidget )
 	{
 		// all of the mouse handling stuff requires that the widget be at 0,0
 		pWidget->move( 0, 0 );
-		m_pScene->addWidget( pWidget );
-	}
+        m_pScene->addWidget( pWidget );
+    } else {
+        std::cout << "m_pScene doesn't exist" << std::endl;
+    }
 	m_pWidget = pWidget;
 
 	m_pFbo = new QOpenGLFramebufferObject( pWidget->width(), pWidget->height(), GL_TEXTURE_2D );
 
     if( vr::VROverlay() )
     {
-        vr::HmdVector2_t vecWindowSize =
-        {
-            (float)pWidget->width(),
-            (float)pWidget->height()
-        };
-        vr::VROverlay()->SetOverlayMouseScale( m_ulOverlayHandle, &vecWindowSize );
+        //vr::HmdVector2_t vecWindowSize =
+        //{
+        //    (float)pWidget->width(),
+        //    (float)pWidget->height()
+        //};
+        //vr::VROverlay()->SetOverlayMouseScale( m_ulOverlayHandle, &vecWindowSize );
         vr::VROverlay()->ShowOverlay(m_ulOverlayHandle);
         //vr::VROverlay()->ShowDashboard(m_pch);
     }
@@ -423,10 +426,22 @@ vr::HmdError COpenVROverlayController::GetLastHmdError()
 }
 
 void COpenVROverlayController::ShowWidget() {
+    if (!vr::VROverlay() || !vr::VRSystem()) {
+        return;
+    }
+    if (vr::VROverlay()->IsOverlayVisible(m_ulOverlayHandle)) {
+        return;
+    }
     vr::VROverlay()->ShowOverlay(m_ulOverlayHandle);
 }
 
 void COpenVROverlayController::HideWidget() {
+    if (!vr::VROverlay() || !vr::VRSystem()) {
+        return;
+    }
+    if (!vr::VROverlay()->IsOverlayVisible(m_ulOverlayHandle)) {
+        return;
+    }
     vr::VROverlay()->HideOverlay(m_ulOverlayHandle);
 }
 

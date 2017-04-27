@@ -13,6 +13,7 @@
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QGraphicsEllipseItem>
 #include <QCursor>
+#include <QTextStream>
 #include <iostream>
 
 using namespace vr;
@@ -89,6 +90,7 @@ QString GetTrackedDeviceString( vr::IVRSystem *pHmd, vr::TrackedDeviceIndex_t un
 bool COpenVROverlayController::Init()
 {
 	bool bSuccess = true;
+    QTextStream out(stdout);
 
     m_strName = "systemoverlay";
 
@@ -129,9 +131,21 @@ bool COpenVROverlayController::Init()
         std::string sKey = std::string( "sample." ) + m_strName.toStdString();
         m_pch = sKey.c_str();
         //vr::VROverlayError overlayError = vr::VROverlay()->CreateDashboardOverlay( sKey.c_str(), m_strName.toStdString().c_str(), &m_ulOverlayHandle, &m_ulOverlayThumbnailHandle );
+        //std::cout << "Created overlay with pchKey: " + &m_pch << std::endl;
+        std::string pchKeyStr = "Created overlay with pchKey: ";
+        std::string initOverlayHandleStr = "Initial overlay handle (is invalid): ";
+        std::string changedOverlayHandleStr = "Initialized overlay handle (is invalid): ";
+        initOverlayHandleStr.append((m_ulOverlayHandle == vr::k_ulOverlayHandleInvalid) ? "true" : "false");
+        pchKeyStr.append(m_pch);
+        out << QString::fromStdString(pchKeyStr) << endl;
+        out << QString::fromStdString(initOverlayHandleStr) << endl;
         vr::VROverlayError overlayError = vr::VROverlay()->CreateOverlay( m_pch, m_strName.toStdString().c_str(), &m_ulOverlayHandle);
+        changedOverlayHandleStr.append((m_ulOverlayHandle == vr::k_ulOverlayHandleInvalid) ? "true" : "false");
+        out << QString::fromStdString(changedOverlayHandleStr) << endl;
 		bSuccess = bSuccess && overlayError == vr::VROverlayError_None;
-	}
+    } else {
+        out << QString::fromStdString("No VROverlay()") << endl;
+    }
 
 	if( bSuccess )
 	{
@@ -426,22 +440,44 @@ vr::HmdError COpenVROverlayController::GetLastHmdError()
 }
 
 void COpenVROverlayController::ShowWidget() {
+    QTextStream out(stdout);
     if (!vr::VROverlay() || !vr::VRSystem()) {
+        std::string overlayStatus = "VROverlay(): ";
+        std::string systemStatus = "VRSystem(): ";
+        overlayStatus.append(vr::VROverlay() ? "initialized" : "invalid");
+        systemStatus.append(vr::VRSystem() ? "initialized" : "invalid");
+        out << QString::fromStdString(overlayStatus) << endl;
+        out << QString::fromStdString(systemStatus) << endl;
         return;
     }
     if (vr::VROverlay()->IsOverlayVisible(m_ulOverlayHandle)) {
+        out << QString::fromStdString("Overlay already visible") << endl;
         return;
     }
+    std::string overlayHandleStr = "Overlay handle (ShowWidget()) (is invalid): ";
+    overlayHandleStr.append((m_ulOverlayHandle == vr::k_ulOverlayHandleInvalid) ? "true" : "false");
+    out << QString::fromStdString(overlayHandleStr) << endl;
     vr::VROverlay()->ShowOverlay(m_ulOverlayHandle);
 }
 
 void COpenVROverlayController::HideWidget() {
+    QTextStream out(stdout);
     if (!vr::VROverlay() || !vr::VRSystem()) {
+        std::string overlayStatus = "VROverlay(): ";
+        std::string systemStatus = "VRSystem(): ";
+        overlayStatus.append(vr::VROverlay() ? "initialized" : "invalid");
+        systemStatus.append(vr::VRSystem() ? "initialized" : "invalid");
+        out << QString::fromStdString(overlayStatus) << endl;
+        out << QString::fromStdString(systemStatus) << endl;
         return;
     }
     if (!vr::VROverlay()->IsOverlayVisible(m_ulOverlayHandle)) {
+        out << QString::fromStdString("Overlay is not visible") << endl;
         return;
     }
+    std::string overlayHandleStr = "Overlay handle (HideWidget()) (is invalid): ";
+    overlayHandleStr.append((m_ulOverlayHandle == vr::k_ulOverlayHandleInvalid) ? "true" : "false");
+    out << QString::fromStdString(overlayHandleStr) << endl;
     vr::VROverlay()->HideOverlay(m_ulOverlayHandle);
 }
 

@@ -12,8 +12,8 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     // Start UI
     ui->setupUi(this);
+    QTextStream out(stdout);
     timer = new QTimer(this);
-    out = new QTextStream(stdout);
     countingDown = false;
     shouldAutoRestart = true;
     //connect(ui->confirmButton, &QPushButton::clicked, this, &MainWindow::test);
@@ -27,12 +27,18 @@ MainWindow::MainWindow(QWidget *parent) :
     // End UI
 
     // Start VR
-#if USEVR == 1
+//#if USEVR == 1
     OverlayWidget *pOverlayWidget = new OverlayWidget;
 
-    COpenVROverlayController::SharedInstance()->Init();
+    bool success = COpenVROverlayController::SharedInstance()->Init();
+    //std::cout << "Initialized VR: " + success << std::endl;
+    std::string s = "Initialized VR: ";
+    s.append(success ? "true" : "false");
+    QString str = QString::fromStdString(s);
+    out << str << endl;
+    //std::printf("Initialized VR: %s \n", success ? "true" : "false");
     COpenVROverlayController::SharedInstance()->SetWidget( pOverlayWidget );
-#endif
+//#endif
     // End VR
 }
 

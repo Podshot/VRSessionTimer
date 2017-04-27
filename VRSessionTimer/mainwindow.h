@@ -33,7 +33,7 @@ private:
     Ui::MainWindow *ui;
     QTimer *timer;
     QTime timeLimit;
-    QTextStream *out;
+    //QTextStream out;
     bool countingDown;
     bool shouldAutoRestart;
 };

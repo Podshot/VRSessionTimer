@@ -19,6 +19,7 @@
 #include <QtGui/QOpenGLContext>
 #include <QtWidgets/QGraphicsScene>
 #include <QOffscreenSurface>
+#include <iostream>
 class QOpenGLFramebufferObject;
 
 class COpenVROverlayController : public QObject
@@ -48,6 +49,8 @@ public:
 	void SetWidget( QWidget *pWidget );
     void ShowWidget();
     void HideWidget();
+    void Log(QString str);
+    void Log(std::string str);
 
 public slots:
 	void OnSceneChanged( const QList<QRectF>& );

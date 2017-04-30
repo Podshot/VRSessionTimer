@@ -1,0 +1,11 @@
+(Init) Created overlay with pchKey: sample.systemoverlay
+(Init) Initial overlay handle: invalid
+(Init) Initialized overlay handle: valid
+(SetWidget) pWidget is NULL: false
+(SetWidget) m_pWidget is NULL: false
+(SetWidget) Overlay handle: valid
+(SetWidget) Overlay is visible: true
+(OnSceneChanged) Overlay handle: valid
+(OnSceneChanged) Overlay handle: valid
+(OnSceneChanged) Overlay handle: valid
+(Show Widget) Overlay already visible

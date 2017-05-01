@@ -90,9 +90,8 @@ QString GetTrackedDeviceString( vr::IVRSystem *pHmd, vr::TrackedDeviceIndex_t un
 bool COpenVROverlayController::Init()
 {
     bool bSuccess = true;
-    QTextStream out(stdout);
 
-    m_strName = "systemoverlay";
+    m_strName = "vrsessiontimer";
 
     QStringList arguments = qApp->arguments();
 
@@ -103,9 +102,13 @@ bool COpenVROverlayController::Init()
     }
 
     QSurfaceFormat format;
-    format.setMajorVersion( 4 );
+    format.setMajorVersion( 2 );
     format.setMinorVersion( 1 );
-    format.setProfile( QSurfaceFormat::CompatibilityProfile );
+    //format.setProfile( QSurfaceFormat::CompatibilityProfile );
+    format.setDepthBufferSize(16);
+    format.setStencilBufferSize(8);
+    format.setSamples(16);
+
 
     m_pOpenGLContext = new QOpenGLContext();
     m_pOpenGLContext->setFormat( format );
@@ -115,11 +118,12 @@ bool COpenVROverlayController::Init()
 
     // create an offscreen surface to attach the context and FBO to
     m_pOffscreenSurface = new QOffscreenSurface();
+    m_pOffscreenSurface->setFormat(m_pOpenGLContext->format());
     m_pOffscreenSurface->create();
-    m_pOpenGLContext->makeCurrent( m_pOffscreenSurface );
+    m_pOpenGLContext->makeCurrent(m_pOffscreenSurface);
 
     m_pScene = new QGraphicsScene();
-    connect( m_pScene, SIGNAL(changed(const QList<QRectF>&)), this, SLOT( OnSceneChanged(const QList<QRectF>&)) );
+    connect(m_pScene, SIGNAL(changed(const QList<QRectF>&)), this, SLOT(OnSceneChanged(const QList<QRectF>&)));
 
     // Loading the OpenVR Runtime
     bSuccess = ConnectToVRRuntime();
@@ -128,10 +132,9 @@ bool COpenVROverlayController::Init()
 
     if( vr::VROverlay() )
     {
-        std::string sKey = std::string( "sample." ) + m_strName.toStdString();
+        std::string sKey = m_strName.toStdString();
         m_pch = sKey.c_str();
         //vr::VROverlayError overlayError = vr::VROverlay()->CreateDashboardOverlay( sKey.c_str(), m_strName.toStdString().c_str(), &m_ulOverlayHandle, &m_ulOverlayThumbnailHandle );
-        //std::cout << "Created overlay with pchKey: " + &m_pch << std::endl;
 
         std::string pchKeyStr = "(Init) Created overlay with pchKey: ";
         std::string initOverlayHandleStr = "(Init) Initial overlay handle: ";
@@ -140,19 +143,15 @@ bool COpenVROverlayController::Init()
         pchKeyStr.append(m_pch);
         Log(QString::fromStdString(pchKeyStr));
         Log(QString::fromStdString(initOverlayHandleStr));
-        //out << QString::fromStdString(pchKeyStr) << endl;
-        //out << QString::fromStdString(initOverlayHandleStr) << endl;
 
         vr::VROverlayError overlayError = vr::VROverlay()->CreateOverlay( m_pch, m_strName.toStdString().c_str(), &m_ulOverlayHandle);
 
         changedOverlayHandleStr.append((m_ulOverlayHandle == vr::k_ulOverlayHandleInvalid) ? "invalid" : "valid");
         Log(QString::fromStdString(changedOverlayHandleStr));
-        //out << QString::fromStdString(changedOverlayHandleStr) << endl;
 
         bSuccess = bSuccess && overlayError == vr::VROverlayError_None;
     } else {
         Log(QString::fromStdString("No VROverlay()"));
-        //out << QString::fromStdString("No VROverlay()") << endl;
     }
 
     if( bSuccess )
@@ -196,7 +195,6 @@ void COpenVROverlayController::Shutdown()
 void COpenVROverlayController::OnSceneChanged( const QList<QRectF>& )
 {
     // skip rendering if the overlay isn't visible
-    QTextStream out(stdout);
     if( !vr::VROverlay() ||
             //        ( !vr::VROverlay()->IsOverlayVisible( m_ulOverlayHandle ) && !vr::VROverlay()->IsOverlayVisible( m_ulOverlayThumbnailHandle ) ) )
             !vr::VROverlay()->IsOverlayVisible( m_ulOverlayHandle ) ) {
@@ -207,10 +205,8 @@ void COpenVROverlayController::OnSceneChanged( const QList<QRectF>& )
         if (vr::VROverlay()) {
             overlayShow.append(vr::VROverlay()->IsOverlayVisible(m_ulOverlayHandle) ? "true" : "false");
             Log(QString::fromStdString(overlayShow));
-            //out << QString::fromStdString(overlayShow) << endl;
         }
         Log(QString::fromStdString(overlayStatus));
-        //out << QString::fromStdString(overlayStatus) << endl;
 
         return;
     }
@@ -231,14 +227,17 @@ void COpenVROverlayController::OnSceneChanged( const QList<QRectF>& )
         std::string overlayHandleStr = "(OnSceneChanged) Overlay handle: ";
         overlayHandleStr.append((m_ulOverlayHandle == vr::k_ulOverlayHandleInvalid) ? "invalid" : "valid");
         Log(QString::fromStdString(overlayHandleStr));
-        //out << QString::fromStdString(overlayHandleStr) << endl;
-
-        vr::Texture_t texture = {(void*)(uintptr_t)unTexture, vr::TextureType_OpenGL, vr::ColorSpace_Auto };
+#if defined _WIN64 || defined _LP64
+        Log(QString::fromStdString("(OnSceneChanged) Using 'uint64_t' conversion for texture"));
+        vr::Texture_t texture = { (void*)((uint64_t)unTexture), vr::TextureType_OpenGL, vr::ColorSpace_Auto };
+#else
+        Log("(OnSceneChanged) Using 'void*' conversion for texture");
+        vr::Texture_t texture = { (void*)unTexture, vr::TextureType_OpenGL, vr::ColorSpace_Auto };
+#endif
         vr::VROverlay()->SetOverlayTexture( m_ulOverlayHandle, &texture );
-        vr::VROverlay()->SetOverlayAlpha(m_ulOverlayHandle, 1.0);
+        //vr::VROverlay()->SetOverlayAlpha(m_ulOverlayHandle, 1.0);
     } else {
         Log(QString::fromStdString("(OnSceneChanged) unTexture was 0"));
-        //out << QString::fromStdString("unTexture was 0") << endl;
     }
 }
 
@@ -378,7 +377,6 @@ void COpenVROverlayController::OnTimeoutPumpEvents()
 //-----------------------------------------------------------------------------
 void COpenVROverlayController::SetWidget( QWidget *pWidget )
 {
-    QTextStream out(stdout);
     if( m_pScene )
     {
         // all of the mouse handling stuff requires that the widget be at 0,0
@@ -386,46 +384,41 @@ void COpenVROverlayController::SetWidget( QWidget *pWidget )
         m_pScene->addWidget( pWidget );
     } else {
         Log(QString::fromStdString("(SetWidget) m_pScene doesn't exist"));
-        //out << QString::fromStdString("m_pScene doesn't exist") << endl;
     }
 
     std::string widgetStr = "(SetWidget) pWidget is NULL: ";
     widgetStr.append((pWidget == NULL) ? "true" : "false");
     Log(QString::fromStdString(widgetStr));
-    //out << QString::fromStdString(widgetStr) << endl;
 
     m_pWidget = pWidget;
 
     widgetStr = "(SetWidget) m_pWidget is NULL: ";
     widgetStr.append((pWidget == NULL) ? "true" : "false");
     Log(QString::fromStdString(widgetStr));
-    //out << QString::fromStdString(widgetStr) << endl;
 
     m_pFbo = new QOpenGLFramebufferObject( pWidget->width(), pWidget->height(), GL_TEXTURE_2D );
+    m_pFbo->setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
 
     if( vr::VROverlay() )
     {
-        //vr::HmdVector2_t vecWindowSize =
-        //{
-        //    (float)pWidget->width(),
-        //    (float)pWidget->height()
-        //};
+        vr::HmdVector2_t vecWindowSize =
+        {
+            (float)pWidget->width(),
+            (float)pWidget->height()
+        };
         //vr::VROverlay()->SetOverlayMouseScale( m_ulOverlayHandle, &vecWindowSize );
         std::string overlayHandleStr = "(SetWidget) Overlay handle: ";
         overlayHandleStr.append((m_ulOverlayHandle == vr::k_ulOverlayHandleInvalid) ? "invalid" : "valid");
         Log(QString::fromStdString(overlayHandleStr));
-        //out << QString::fromStdString(overlayHandleStr) << endl;
 
         vr::VROverlay()->ShowOverlay(m_ulOverlayHandle);
 
         std::string isShown = "(SetWidget) Overlay is visible: ";
         isShown.append(vr::VROverlay()->IsOverlayVisible(m_ulOverlayHandle) ? "true" : "false");
         Log(QString::fromStdString(isShown));
-        //out << QString::fromStdString(isShown) << endl;
         //vr::VROverlay()->ShowDashboard(m_pch);
     } else {
         Log(QString::fromStdString("(SetWidget) VROverlay is not running"));
-        //out << QString::fromStdString("VROverlay is not running") << endl;
     }
 
 }
@@ -496,7 +489,6 @@ vr::HmdError COpenVROverlayController::GetLastHmdError()
 }
 
 void COpenVROverlayController::ShowWidget() {
-    QTextStream out(stdout);
     if (!vr::VROverlay() || !vr::VRSystem()) {
 
         std::string overlayStatus = "(ShowWidget) VROverlay(): ";
@@ -505,13 +497,10 @@ void COpenVROverlayController::ShowWidget() {
         systemStatus.append(vr::VRSystem() ? "initialized" : "invalid");
         Log(QString::fromStdString(overlayStatus));
         Log(QString::fromStdString(systemStatus));
-        //out << QString::fromStdString(overlayStatus) << endl;
-        //out << QString::fromStdString(systemStatus) << endl;
 
         return;
     }
     if (vr::VROverlay()->IsOverlayVisible(m_ulOverlayHandle)) {
-        //out << QString::fromStdString("Overlay already visible") << endl;
         Log(QString::fromStdString("(Show Widget) Overlay already visible"));
         return;
     }
@@ -519,26 +508,21 @@ void COpenVROverlayController::ShowWidget() {
     std::string overlayHandleStr = "(ShowWidget) Overlay handle: ";
     overlayHandleStr.append((m_ulOverlayHandle == vr::k_ulOverlayHandleInvalid) ? "invalid" : "valid");
     Log(QString::fromStdString(overlayHandleStr));
-    //out << QString::fromStdString(overlayHandleStr) << endl;
 
     vr::VROverlay()->ShowOverlay(m_ulOverlayHandle);
 
     std::string isShown = "(ShowWidget) Overlay is visible: ";
     isShown.append(vr::VROverlay()->IsOverlayVisible(m_ulOverlayHandle) ? "true" : "false");
-    //out << QString::fromStdString(isShown) << endl;
     Log(QString::fromStdString(isShown));
 }
 
 void COpenVROverlayController::HideWidget() {
-    QTextStream out(stdout);
     if (!vr::VROverlay() || !vr::VRSystem()) {
 
         std::string overlayStatus = "(HideWidget) VROverlay(): ";
         std::string systemStatus = "(HideWidget) VRSystem(): ";
         overlayStatus.append(vr::VROverlay() ? "initialized" : "invalid");
         systemStatus.append(vr::VRSystem() ? "initialized" : "invalid");
-        //out << QString::fromStdString(overlayStatus) << endl;
-        //out << QString::fromStdString(systemStatus) << endl;
         Log(QString::fromStdString(overlayStatus));
         Log(QString::fromStdString(systemStatus));
 
@@ -546,7 +530,6 @@ void COpenVROverlayController::HideWidget() {
     }
     if (!vr::VROverlay()->IsOverlayVisible(m_ulOverlayHandle)) {
 
-        //out << QString::fromStdString("Overlay is not visible") << endl;
         Log(QString::fromStdString("(HideWidget) Overlay is not visible"));
 
         return;
@@ -554,14 +537,12 @@ void COpenVROverlayController::HideWidget() {
 
     std::string overlayHandleStr = "(HideWidget) Overlay handle: ";
     overlayHandleStr.append((m_ulOverlayHandle == vr::k_ulOverlayHandleInvalid) ? "invalid" : "valid");
-    //out << QString::fromStdString(overlayHandleStr) << endl;
     Log(QString::fromStdString(overlayHandleStr));
 
     vr::VROverlay()->HideOverlay(m_ulOverlayHandle);
 
     std::string isShown = "(HideWidget) Overlay is visible: ";
     isShown.append(vr::VROverlay()->IsOverlayVisible(m_ulOverlayHandle) ? "true" : "false");
-    //out << QString::fromStdString(isShown) << endl;
     Log(QString::fromStdString(isShown));
 }
 

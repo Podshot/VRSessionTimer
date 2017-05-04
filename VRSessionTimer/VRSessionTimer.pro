@@ -17,12 +17,14 @@ SOURCES += main.cpp\
     overlaywidget.cpp \
     openvroverlaycontroller.cpp \
     vrnotification.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    overlaycontroller.cpp
 
 HEADERS  += overlaywidget.h \
     openvroverlaycontroller.h \
     vrnotification.h \
-    mainwindow.h
+    mainwindow.h \
+    overlaycontroller.h
 
 FORMS    += overlaywidget.ui \
     vrnotification.ui \

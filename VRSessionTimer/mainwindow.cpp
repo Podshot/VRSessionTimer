@@ -2,9 +2,11 @@
 #include "ui_mainwindow.h"
 #include "overlaywidget.h"
 #include "openvroverlaycontroller.h"
+#include "overlaycontroller.h"
 #include <iostream>
 
-#define USEVR 1
+#define USEVR 0
+#define OVERlAYHANDLER 1
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -30,14 +32,20 @@ MainWindow::MainWindow(QWidget *parent) :
 //#if USEVR == 1
     OverlayWidget *pOverlayWidget = new OverlayWidget;
 
+#if OVERlAYHANDLER == 0
     bool success = COpenVROverlayController::SharedInstance()->Init();
+#else
+    bool success = OverlayController::Instance()->Init();
+#endif
     //std::cout << "Initialized VR: " + success << std::endl;
     std::string s = "Initialized VR: ";
     s.append(success ? "true" : "false");
     QString str = QString::fromStdString(s);
     out << str << endl;
     //std::printf("Initialized VR: %s \n", success ? "true" : "false");
+#if OVERlAYHANDLER == 0
     COpenVROverlayController::SharedInstance()->SetWidget( pOverlayWidget );
+#endif
 //#endif
     // End VR
 }
@@ -52,15 +60,19 @@ void MainWindow::startCountdown() {
 
 void MainWindow::stopCountdown() {
     countingDown = false;
-#if USEVR == 1
+#if OVERlAYHANDLER == 0
     COpenVROverlayController::SharedInstance()->ShowWidget();
+#else
+    OverlayController::Instance()->ShowWidget();
 #endif
     timer->stop();
 }
 
 void MainWindow::onCloseNotification() {
-#if USEVR == 1
+#if OVERlAYHANDLER == 0
     COpenVROverlayController::SharedInstance()->HideWidget();
+#else
+    OverlayController::Instance()->HideWidget();
 #endif
     if (shouldAutoRestart) {
         startCountdown();

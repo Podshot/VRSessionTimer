@@ -1,8 +1,8 @@
 //====== Copyright Valve Corporation, All rights reserved. =======
 
+#define DEBUG 1
 
 #include "openvroverlaycontroller.h"
-
 
 #include <QOpenGLFramebufferObjectFormat>
 #include <QOpenGLPaintDevice>
@@ -231,10 +231,10 @@ void COpenVROverlayController::OnSceneChanged( const QList<QRectF>& )
         Log(QString::fromStdString("(OnSceneChanged) Using 'uint64_t' conversion for texture"));
         vr::Texture_t texture = { (void*)((uint64_t)unTexture), vr::TextureType_OpenGL, vr::ColorSpace_Auto };
 #else
-        Log("(OnSceneChanged) Using 'void*' conversion for texture");
+        Log(QString::fromStdString("(OnSceneChanged) Using 'void*' conversion for texture"));
         vr::Texture_t texture = { (void*)unTexture, vr::TextureType_OpenGL, vr::ColorSpace_Auto };
 #endif
-        vr::VROverlay()->SetOverlayTexture( m_ulOverlayHandle, &texture );
+        vr::VROverlay()->SetOverlayTexture(m_ulOverlayHandle, &texture);
         //vr::VROverlay()->SetOverlayAlpha(m_ulOverlayHandle, 1.0);
     } else {
         Log(QString::fromStdString("(OnSceneChanged) unTexture was 0"));
